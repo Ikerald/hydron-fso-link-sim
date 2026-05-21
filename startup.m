@@ -1,19 +1,22 @@
 % startup.m
-% Adds all project subdirectories to the MATLAB path
+% Adds selected project subdirectories to the MATLAB path
 
 clc;
 disp('Initializing HydRON Simulation Environment...');
 
-% Get the absolute path of the root directory
 project_root = fileparts(mfilename('fullpath'));
 
-% Add the src directory and all its subdirectories to the path
-addpath(genpath(fullfile(project_root, 'src')));
+% Folders to add (use genpath for folders that should include subfolders)
+folders = { 'src', 'data', 'link_budget', 'simulation' };
+use_genpath = [ true, true, true, true ]; % set true to include subfolders, false for top-level only
 
-% Add the main_scripts directory
-addpath(fullfile(project_root, 'data'));
-
-% Add the src directory and all its subdirectories to the path
-addpath(genpath(fullfile(project_root, 'data')));
+for k = 1:numel(folders)
+    p = fullfile(project_root, folders{k});
+    if use_genpath(k)
+        addpath(genpath(p));
+    else
+        addpath(p);
+    end
+end
 
 disp('Paths added successfully. Ready to run simulations.');
