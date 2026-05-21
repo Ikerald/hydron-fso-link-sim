@@ -163,21 +163,30 @@ legend('X-pol', 'Y-pol', 'Location', 'best');
 ylim([-80 5]);
 
 % 5.5 Eye diagrams of pulse-shaped waveform -------------------------------
-eyediagram(real(tx_X(span*sps+1 : span*sps+4000)), 2*sps);
-title('X-pol I-component eye diagram');
+eye_tx1 = real(tx_X(span*sps+1 : span*sps+4000));
+eye_tx2 = real(tx_Y(span*sps+1 : span*sps+4000));
+eye_tx = [eye_tx1, eye_tx2];
 
-eyediagram(real(tx_Y(span*sps+1 : span*sps+4000)), 2*sps);
-title('Y-pol I-component eye diagram');
+eyediagram(eye_tx, 2*sps);
 
-%% 6. Ideal Channel: no noise, no fading, no impairments
+% Grab the axes handles from the current figure
+ax = findobj(gcf, 'Type', 'axes');
+
+% Note: findobj grabs handles in reverse order of creation!
+% ax(1) is the RIGHT plot, ax(2) is the LEFT plot.
+title(ax(2), 'X-pol I-component eye diagram');
+title(ax(1), 'Y-pol I-component eye diagram');
+
+%% 6. AWGN Channel: Additive White Gaussian Noise, no fading, no impairments
 
 % Physically this is one optical DP-QPSK signal.
 % In baseband simulation we keep the two polarizations separate.
 tx_DP = [tx_X, tx_Y];
 
-% Ideal channel: receiver gets exactly what transmitter sends
-rx_X = tx_DP(:,1);
-rx_Y = tx_DP(:,2);
+% AWGN channel: receiver gets a noised signal
+rx_DP = awgn(tx_DP, 7.78, 'measured');
+rx_X = rx_DP(:,1);
+rx_Y = rx_DP(:,2);
 
 %% 7. RX - Matched Filter
 
@@ -223,14 +232,39 @@ fprintf('============================\n\n');
 
 %% 10. RX - Visualization
 
-% 10.1 Eye diagrams after channel -----------------------------------------
-eyediagram(real(rx_X(span*sps+1 : span*sps+4000)), 2*sps);
-title('X-pol I-component eye diagram after channel');
+% 10.1 Received spectrum --------------------------------------------------
+figure('Name','Rx Spectrum');
 
-eyediagram(real(rx_Y(span*sps+1 : span*sps+4000)), 2*sps);
-title('Y-pol I-component eye diagram after channel');
+% https://es.mathworks.com/help/signal/ref/pwelch.html
+[Pxx_r, f_psd_r] = pwelch(rx_X, win, noverlap, nfft, Fs, 'centered');
+[Pyy_r, ~]     = pwelch(rx_Y, win, noverlap, nfft, Fs, 'centered');
 
-% 10.2 Received Constellation After Matched Filter-------------------------
+plot(f_psd_r/1e9, 10*log10(Pxx_r/max(Pxx_r)), 'b', 'LineWidth', 1.2);
+hold on;
+plot(f_psd_r/1e9, 10*log10(Pyy_r/max(Pyy_r)), 'r--', 'LineWidth', 1.2);
+grid on;
+
+xlabel('Frequency [GHz]');
+ylabel('Normalized PSD [dB]');
+title(sprintf('DP-QPSK Rx spectrum, expected null-null BW = %.2f GHz', ...
+    BW_null/1e9));
+legend('X-pol', 'Y-pol', 'Location', 'best');
+ylim([-80 5]);
+
+% 10.2 Eye diagrams after channel -----------------------------------------
+eye_rx1 = real(rxmf_X(span*sps+1 : span*sps+4000));
+eye_rx2 = real(rxmf_Y(span*sps+1 : span*sps+4000));
+eye_rx = [eye_rx1, eye_rx2];
+
+eyediagram(eye_rx, 2*sps);
+
+% Grab the axes handles from the current figure
+ax2 = findobj(gcf, 'Type', 'axes');
+
+title(ax2(2), 'X-pol I-component eye diagram after matched filter');
+title(ax2(1), 'Y-pol I-component eye diagram after matched filter');
+
+% 10.2 Received constellation after matched filter ------------------------
 figure('Name','Received symbols after ideal matched filter');
 
 subplot(1,2,1);

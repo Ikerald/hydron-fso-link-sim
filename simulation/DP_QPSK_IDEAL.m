@@ -169,16 +169,15 @@ title('X-pol I-component tx eye diagram');
 eyediagram(real(tx_Y(span*sps+1 : span*sps+4000)), 2*sps);
 title('Y-pol I-component tx eye diagram');
 
-%% 6. AWGN Channel: Additive White Gaussian Noise, no fading, no impairments
+%% 6. Ideal Channel: no noise, no fading, no impairments
 
 % Physically this is one optical DP-QPSK signal.
 % In baseband simulation we keep the two polarizations separate.
 tx_DP = [tx_X, tx_Y];
 
-% AWGN channel: receiver gets a noised signal
-rx_DP = awgn(tx_DP, 7.78, 'measured');
-rx_X = rx_DP(:,1);
-rx_Y = rx_DP(:,2);
+% Ideal channel: receiver gets exactly what transmitter sends
+rx_X = tx_DP(:,1);
+rx_Y = tx_DP(:,2);
 
 %% 7. RX - Matched Filter
 
@@ -225,10 +224,10 @@ fprintf('============================\n\n');
 %% 10. RX - Visualization
 
 % 10.1 Eye diagrams after matched filter ----------------------------------
-eyediagram(real(rxmf_X(span*sps+1 : span*sps+4000)), 2*sps);
+eyediagram(real(rx_X(span*sps+1 : span*sps+4000)), 2*sps);
 title('X-pol I-component rx eye diagram after filter');
 
-eyediagram(real(rxmf_Y(span*sps+1 : span*sps+4000)), 2*sps);
+eyediagram(real(rx_Y(span*sps+1 : span*sps+4000)), 2*sps);
 title('Y-pol I-component rx eye diagram after filter');
 
 % 10.2 Received constellation after matched filter ------------------------
