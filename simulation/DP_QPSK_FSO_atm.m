@@ -4,47 +4,62 @@ rng(2025);                  % fixed seed
 
 %% 1. System Parameters
 
-% ESTOL 100G DP-QPSK baseline
-Rs = 31.5e9;                % symbol rate
-
-Ts = 1/Rs;
-
-% Modulation --------------------------------------------------------------
+% 1.1 ESTOL 100G DP-QPSK baseline modulation config -----------------------
 % DP-QPSK:
 % QPSK = 2 bits/symbol/polarization
 % DP = 2 polarizations
-num_symbols = 1e6;          % symbols per polarization ??
-M = 4;                      % QPSK modulation order
-k = log2(M);                % bits per symbol
-Npol = 2;                   % dual polarization
+mod.Rs = 31.5e9;                % symbol rate [bauds]
+mod.num_sym = 1e6;              % symbols per polarization
+mod.M = 4;                      % QPSK modulation order
+mod.Npol = 2;                   % dual polarization
+% RRC Filter
+mod.sps = 4;                    % samples per symbol
+mod.rolloff = 0.2;              % RRC roll-off factor - OpenROAD MSA Spec
+mod.span = 16;                  % RRC mod.span in symbols
 
-Rb_raw = Rs * k * Npol;     % raw bit rate before FEC/overheads [bit/s]
+% Calculated variables
+Ts = 1/mod.Rs;
+k = log2(mod.M);                        % bits per symbol
+Rb_raw = mod.Rs * k * mod.Npol;         % raw bit rate before FEC/overheads [bit/s]
+Fs = mod.Rs * mod.sps;                  % sampling frequency [Hz]
+BW_null = mod.Rs * (1 + mod.rolloff);   % theoretical null-to-null bandwidth [Hz]
 
-% RRC Filter --------------------------------------------------------------
-sps = 4;                        % samples per symbol
-rolloff = 0.2;                  % RRC roll-off factor - OpenROAD MSA Spec
-span = 16;                      % RRC span in symbols
+% 1.2 FSO scenario inputs -------------------------------------------------
+% Worst-case design point: el = 15 deg, 1550 nm band, bad conditions.
+% Check Link Budget for more info
+scen.el_deg = 15;               % design elevation [deg]
+scen.wl = 1554.13e-9;           % wavelength [m], ESTOL L2
+scen.t_z= 0.891;                % zenith transmittance bad, 1550 nm
+% Future additions (do not delete; comment out until used):
+% scen.Cn2_model    = 'HV57';
+% scen.sigma_jit_rad = ...;
+% scen.theta_tx_rad  = 380e-6;
+% scen.h_orbit       = 530e3;
+% scen.h_ogs         = 578;
 
-Fs = Rs * sps;                  % sampling frequency [Hz]
-BW_null = Rs * (1 + rolloff);   % theoretical null-to-null bandwidth [Hz]
-
-% Visualization -----------------------------------------------------------
+% 1.3 Visualization -------------------------------------------------------
 fprintf('\n=== DP-QPSK TX Parameters ===\n');
-fprintf('Symbol rate per pol      = %.2f Gbaud\n', Rs/1e9);
+fprintf('Symbol rate per pol      = %.2f Gbaud\n', mod.Rs/1e9);
 fprintf('Raw bit rate             = %.2f Gbps\n', Rb_raw/1e9);
-fprintf('Samples per symbol       = %d\n', sps);
+fprintf('Samples per symbol       = %d\n', mod.sps);
 fprintf('Sampling frequency       = %.2f GSa/s\n', Fs/1e9);
-fprintf('RRC roll-off             = %.2f\n', rolloff);
+fprintf('RRC roll-off             = %.2f\n', mod.rolloff);
 fprintf('Expected null-null BW    = %.2f GHz\n', BW_null/1e9);
-fprintf('=============================\n\n');
+fprintf('=============================\n');
+
+fprintf('\n=== FSO Scenario ===\n');
+fprintf('Design elevation         = %.1f deg\n', scen.el_deg);
+fprintf('Wavelength               = %.2f nm\n',  scen.wl*1e9);
+fprintf('Zenith transmittance     = %.3f\n',     scen.t_z);
+fprintf('====================\n\n');
 
 %% 2. TX - Data Generation (PRBS)
 
 % Not truly PRBS, in 2020_Nazir_32GBaud_DP-QPSK, they use 2^17 - 1 PRBS
 % Generate independent random binary data for X and Y polarizations
 % randi([0 1], rows, columns) creates a column vector of 1s and 0s
-bits_X = randi([0 1], num_symbols * k, 1);
-bits_Y = randi([0 1], num_symbols * k, 1);
+bits_X = randi([0 1], mod.num_sym * k, 1);
+bits_Y = randi([0 1], mod.num_sym * k, 1);
 
 %% 3. Symbol Mapping (DP-QPSK)
 
@@ -54,8 +69,8 @@ ints_X = bit2int(bits_X, k);
 ints_Y = bit2int(bits_Y, k);
 
 % Modulate the symbols into a gray QPSK
-symbols_X = pskmod(ints_X, M, pi/4, 'gray');
-symbols_Y = pskmod(ints_Y, M, pi/4, 'gray');
+symbols_X = pskmod(ints_X, mod.M, pi/4, 'gray');
+symbols_Y = pskmod(ints_Y, mod.M, pi/4, 'gray');
 % Based on the OpenROAD standard the modulation are different
     %bX = reshape(bits_X, k, []).';     % rows: [bI bQ]
     %symbols_X = ((2*bX(:,1)-1) + 1j*(2*bX(:,2)-1)) / sqrt(2);
@@ -76,19 +91,19 @@ assert(abs(Es_Y - 1) < 1e-6, 'Y-pol symbol energy is not 1');
 
 % We create the Raised Cosine Filter
 % https://es.mathworks.com/help/signal/ref/rcosdesign.html
-rrc = rcosdesign(rolloff, span, sps, 'sqrt');
+rrc = rcosdesign(mod.rolloff, mod.span, mod.sps, 'sqrt');
 %impz(rrc)
 
 % Filter length
-% N_h = span * sps + 1;
+% N_h = mod.span * mod.sps + 1;
 fprintf('RRC filter length        = %d taps\n', length(rrc));
 fprintf('RRC filter energy        = %.6f\n\n', sum(abs(rrc).^2));
 
 % Upsample and filter the data for pulse shaping
 % https://www.mathworks.com/help/signal/ref/upfirdn.html
-% sps - upsampling
-tx_X = upfirdn(symbols_X, rrc, sps);
-tx_Y = upfirdn(symbols_Y, rrc, sps);
+% mod.sps - upsampling
+tx_X = upfirdn(symbols_X, rrc, mod.sps);
+tx_Y = upfirdn(symbols_Y, rrc, mod.sps);
 
 % Average waveform sample power
 Ptx_X_norm = mean(abs(tx_X).^2);
@@ -96,7 +111,7 @@ Ptx_Y_norm = mean(abs(tx_Y).^2);
 
 fprintf('Mean sample power X-pol  = %.6f\n', Ptx_X_norm);
 fprintf('Mean sample power Y-pol  = %.6f\n', Ptx_Y_norm);
-fprintf('Expected approx.         = %.6f (= 1/sps)\n\n', 1/sps);
+fprintf('Expected approx.         = %.6f (= 1/sps)\n\n', 1/mod.sps);
 
 %% 5. TX - Visualization
 
@@ -122,14 +137,14 @@ xlim([-1.5 1.5]); ylim([-1.5 1.5]);
 % 5.2 RRC impulse response ----------------------------------------------
 figure('Name','RRC Impulse Response');
 
-t_taps = (-(length(rrc)-1)/2 : (length(rrc)-1)/2) / sps;
+t_taps = (-(length(rrc)-1)/2 : (length(rrc)-1)/2) / mod.sps;
 
 stem(t_taps, rrc, 'filled');
 grid on;
 xlabel('Time [symbols]');
 ylabel('Amplitude');
 title(sprintf('RRC impulse response: rolloff = %.2f, span = %d, sps = %d', ...
-    rolloff, span, sps));
+    mod.rolloff, mod.span, mod.sps));
 
 % 5.3 RRC frequency response ----------------------------------------------
 figure('Name','RRC Frequency Response');
@@ -169,11 +184,11 @@ legend('X-pol', 'Y-pol', 'Location', 'best');
 ylim([-80 5]);
 
 % 5.5 Eye diagrams of pulse-shaped waveform -------------------------------
-eye_tx1 = real(tx_X(span*sps+1 : span*sps+4000));
-eye_tx2 = real(tx_Y(span*sps+1 : span*sps+4000));
+eye_tx1 = real(tx_X(mod.span*mod.sps+1 : mod.span*mod.sps+4000));
+eye_tx2 = real(tx_Y(mod.span*mod.sps+1 : mod.span*mod.sps+4000));
 eye_tx = [eye_tx1, eye_tx2];
 
-eyediagram(eye_tx, 2*sps);
+eyediagram(eye_tx, 2*mod.sps);
 
 % Grab the axes handles from the current figure
 ax = findobj(gcf, 'Type', 'axes');
@@ -183,7 +198,15 @@ ax = findobj(gcf, 'Type', 'axes');
 title(ax(2), 'X-pol I-component eye diagram');
 title(ax(1), 'Y-pol I-component eye diagram');
 
-%% 6. AWGN Channel: Additive White Gaussian Noise, no fading, no impairments
+%% 6. Free Space Optical Channel
+
+% Beer-Lambert with plane-parallel airmass m = 1/sin(el).
+% Valid for el >~ 10 deg; below that, use Kasten-Young airmass.
+% Refer to Giggenbach paper
+el_rad = deg2rad(scen.el_deg);
+m_air = 1/sin(el_rad);                      % airmass
+h_atm = scen.t_z ^ m_air;                   % linear power transmittance
+a_atm_dB = 10*log10(h_atm);     % [dB], negative = loss
 
 % Physically this is one optical DP-QPSK signal.
 tx_DP = [tx_X, tx_Y];
@@ -200,10 +223,10 @@ BER_total = zeros(size(EbN0_dB_vec));
 BER_theory = qfunc(sqrt(2*EbN0_lin));
 
 % Filters group delay
-% Tx RRC group delay = ((span*sps+1) - 1) / 2
-% Rx RRC group delay = ((span*sps+1) - 1) / 2
-% Total delay  = (((span*sps+1) - 1) / 2) + (((span*sps+1) - 1) / 2)
-total_delay = span * sps;
+% Tx RRC group delay = ((mod.span*mod.sps+1) - 1) / 2
+% Rx RRC group delay = ((mod.span*mod.sps+1) - 1) / 2
+% Total delay  = (((mod.span*mod.sps+1) - 1) / 2) + (((mod.span*mod.sps+1) - 1) / 2)
+total_delay = mod.span * mod.sps;
 
 for i = 1:length(EbN0_dB_vec)
     EbN0 = 10^(EbN0_dB_vec(i)/10);
@@ -219,8 +242,13 @@ for i = 1:length(EbN0_dB_vec)
     noise_Y = sigma * (randn(size(tx_DP(:,2))) ...
         + 1j*randn(size(tx_DP(:,2))));
 
-    rx_X = tx_DP(:,1) + noise_X;
-    rx_Y = tx_DP(:,2) + noise_Y;
+    % Apply FSO channel (amplitude scaling = sqrt of power gain)
+    % h_ch = h_atm + h_tur and h_poin
+    % TO DO
+    h_ch = h_atm;
+
+    rx_X = sqrt(h_ch) * tx_DP(:,1) + noise_X;
+    rx_Y = sqrt(h_ch) * tx_DP(:,2) + noise_Y;
 
     % Receiver matched filter uses the same RRC filter
     % No up/downsampling
@@ -228,12 +256,12 @@ for i = 1:length(EbN0_dB_vec)
     rxmf_Y = upfirdn(rx_Y, rrc);
 
     % Downsample at symbol instants
-    rx_symbols_X = rxmf_X(total_delay + 1 : sps : total_delay + num_symbols*sps);
-    rx_symbols_Y = rxmf_Y(total_delay + 1 : sps : total_delay + num_symbols*sps);
+    rx_symbols_X = rxmf_X(total_delay + 1 : mod.sps : total_delay + mod.num_sym*mod.sps);
+    rx_symbols_Y = rxmf_Y(total_delay + 1 : mod.sps : total_delay + mod.num_sym*mod.sps);
 
     % Demodulate the gray QPSK into symbols
-    ints_hat_X = pskdemod(rx_symbols_X, M, pi/4, 'gray');
-    ints_hat_Y = pskdemod(rx_symbols_Y, M, pi/4, 'gray');
+    ints_hat_X = pskdemod(rx_symbols_X, mod.M, pi/4, 'gray');
+    ints_hat_Y = pskdemod(rx_symbols_Y, mod.M, pi/4, 'gray');
 
     % Convert the the integers (0 to 3) into 2-bit pairs (e.g., [1 0]). 
     % MSB by default
@@ -246,6 +274,13 @@ for i = 1:length(EbN0_dB_vec)
     BER_total(i) = mean([bits_X ~= bits_hat_X; bits_Y ~= bits_hat_Y]);
 
 end
+
+% 9.1 Visualization -------------------------------------------------------
+fprintf('=== FSO Channel: atmosphere ===\n');
+fprintf('Airmass                  = %.3f\n',      m_air);
+fprintf('h_atm (linear power)     = %.4f\n',      h_atm);
+fprintf('a_atm                    = %.2f dB\n',   a_atm_dB);
+fprintf('===============================\n\n');
 
 %% 10. RX - Visualization
 
@@ -269,11 +304,11 @@ legend('X-pol', 'Y-pol', 'Location', 'best');
 ylim([-80 5]);
 
 % 10.2 Eye diagrams after channel -----------------------------------------
-eye_rx1 = real(rxmf_X(span*sps+1 : span*sps+4000));
-eye_rx2 = real(rxmf_Y(span*sps+1 : span*sps+4000));
+eye_rx1 = real(rxmf_X(mod.span*mod.sps+1 : mod.span*mod.sps+4000));
+eye_rx2 = real(rxmf_Y(mod.span*mod.sps+1 : mod.span*mod.sps+4000));
 eye_rx = [eye_rx1, eye_rx2];
 
-eyediagram(eye_rx, 2*sps);
+eyediagram(eye_rx, 2*mod.sps);
 
 % Grab the axes handles from the current figure
 ax2 = findobj(gcf, 'Type', 'axes');
@@ -302,7 +337,7 @@ ylabel('Quadrature (Q)');
 title('Recovered Y-Pol. symbols'); 
 xlim([-1.5 1.5]); ylim([-1.5 1.5]);
 
-% 10.4 BER Table ----------------------------------------------------------
+% 10.4 BER table ----------------------------------------------------------
 
 % OpenROADM / ESTOL oFEC pre-FEC BER threshold
 BER_preFEC = 2.0e-2;
@@ -311,14 +346,19 @@ BER_preFEC = 2.0e-2;
 EbN0_thr_lin = erfcinv(2*BER_preFEC)^2;
 EbN0_thr_dB  = 10*log10(EbN0_thr_lin);
 
+% Ber for applied channel
+BER_theory_ch = qfunc(sqrt(2*EbN0_lin*h_ch));
+
 % Print BER table
 BER_table = table( ...
     EbN0_dB_vec(:), ...
     BER_theory(:), ...
+    BER_theory_ch(:), ...
     BER_X(:), ...
     BER_Y(:), ...
     BER_total(:), ...
-    'VariableNames', {'EbN0_dB','BER_theory','BER_X','BER_Y','BER_total'} );
+    'VariableNames', {'EbN0_dB','BER_theory','BER_theory_ch','BER_X',...
+    'BER_Y','BER_total'} );
 
 disp(' ');
 disp('=== BER vs Eb/N0 Table ===');
@@ -327,14 +367,15 @@ disp(BER_table);
 fprintf('\nPre-FEC BER threshold = %.2e\n', BER_preFEC);
 fprintf('Theoretical Eb/N0 at pre-FEC threshold = %.3f dB\n\n', EbN0_thr_dB);
 
-% 10.4 BER Plot -----------------------------------------------------------
+% 10.4 BER plot -----------------------------------------------------------
 
 figure('Name','BER vs EbN0_lin');
 
 semilogy(EbN0_dB_vec, BER_theory, 'k-', 'LineWidth', 1.5);
 hold on;
+semilogy(EbN0_dB_vec, BER_theory_ch, 'g--', 'LineWidth', 1.5);
 semilogy(EbN0_dB_vec, BER_X, 'bo-');
-semilogy(EbN0_dB_vec, BER_Y, 'rs-');
+semilogy(EbN0_dB_vec, BER_Y, 'Rs-');
 semilogy(EbN0_dB_vec, BER_total, 'md-');
 % Horizontal pre-FEC threshold
 yline(BER_preFEC, 'k--', 'Pre-FEC BER = 2.0\times10^{-2}', ...
@@ -349,10 +390,10 @@ xline(EbN0_thr_dB, 'k:', sprintf('%.2f dB', EbN0_thr_dB), ...
     'LabelVerticalAlignment','bottom');
 grid on;
 grid minor;
-xlabel('E_b/N_0 [dB]');
+xlabel('Tx. E_b/N_0 before atmospheric attenuation [dB]');
 ylabel('BER');
-title('Gray-coded DP-QPSK AWGN BER validation');
-legend('Theory QPSK', 'X-Pol.', 'Y-Pol.', 'Total', 'Pre-FEC threshold', ...
-    'Threshold crossing');
+title('Gray-coded DP-QPSK with deterministic atmospheric attenuation + AWGN');
+legend('Theory AWGN QPSK', 'Theory Channel QPSK', 'X-Pol.', 'Y-Pol.', ...
+    'Total', 'Pre-FEC threshold', 'Threshold crossing');
 ylim([1e-6 1]);
 xlim([min(EbN0_dB_vec) max(EbN0_dB_vec)]);
