@@ -41,16 +41,16 @@ Main assumptions:
 | ---------------------- | -----------------------------------------: |
 | Link type              |             LEO-to-ground optical downlink |
 | Modulation             |                                    DP-QPSK |
-| Symbol rate            |     (31.5,\mathrm{Gbaud}) per polarization |
-| Raw bit rate           | (126,\mathrm{Gbit/s}) before FEC/overheads |
-| Wavelength             |                      (1554.13,\mathrm{nm}) |
-| Satellite altitude     |                          (530,\mathrm{km}) |
-| Design elevation       |                                 (15^\circ) |
-| Transmit optical power |                             (6,\mathrm{W}) |
+| Symbol rate            |     (31.5,$\mathrm{Gbaud}$) per polarization |
+| Raw bit rate           | (126,$\mathrm{Gbit/s}$) before FEC/overheads |
+| Wavelength             |                      (1554.13,$\mathrm{nm}$) |
+| Satellite altitude     |                          (530,$\mathrm{km}$) |
+| Design elevation       |                                      (15º) |
+| Transmit optical power |                                        6 W |
 | Transmit divergence    |                 (380,\mu\mathrm{rad}) FWHM |
-| Receiver aperture      |                           (0.8,\mathrm{m}) |
-| Pulse shaping          |        RRC, (\alpha=0.2), 4 samples/symbol |
-| BER target             |       (2.0\times10^{-2}) pre-FEC threshold |
+| Receiver aperture      |                           0.8 m |
+| Pulse shaping          |        RRC, ($\alpha=0.2$), 4 samples/symbol |
+| BER target             |       (2.0$\times10^{-2}$) pre-FEC threshold |
 
 ---
 
