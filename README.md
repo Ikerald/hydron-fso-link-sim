@@ -36,22 +36,21 @@ The goal is not to provide a production-ready optical communication simulator, b
 The simulated scenario is a HydRON-like LEO-to-ground optical feeder link using coherent DP-QPSK transmission around the 1550 nm optical window using the ESTOL specifications.
 
 Main assumptions:
-$y+x=3$
 
 | Parameter              |                                      Value |
 | ---------------------- | -----------------------------------------: |
 | Link type              |             LEO-to-ground optical downlink |
 | Modulation             |                                    DP-QPSK |
-| Symbol rate            |     (31.5,$\mathrm{Gbaud}$) per polarization |
-| Raw bit rate           | (126,$\mathrm{Gbit/s}$) before FEC/overheads |
-| Wavelength             |                      (1554.13,$\mathrm{nm}$) |
-| Satellite altitude     |                          (530,$\mathrm{km}$) |
-| Design elevation       |                                      (15º) |
+| Symbol rate            |     31.5 $\mathrm{Gbaud}$ per polarization |
+| Raw bit rate           |  126$\mathrm{Gbit/s}$ before FEC/overheads |
+| Wavelength             |                                 1554.13 nm |
+| Satellite altitude     |                                     530 km |
+| Design elevation       |                                        15º |
 | Transmit optical power |                                        6 W |
-| Transmit divergence    |                 (380,\mu\mathrm{rad}) FWHM |
-| Receiver aperture      |                           0.8 m |
+| Transmit divergence    |                          380 $\mu$rad FWHM |
+| Receiver aperture      |                                      0.8 m |
 | Pulse shaping          |        RRC, ($\alpha=0.2$), 4 samples/symbol |
-| BER target             |       (2.0$\times10^{-2}$) pre-FEC threshold |
+| BER target             |       2.0$\times10^{-2}$ pre-FEC threshold |
 
 ---
 
@@ -128,13 +127,13 @@ The link-budget simulation computes received irradiance at the Optical Ground St
 
 ![Link budget versus elevation](docs/figures/A01_Link_budget.png)
 
-At the design elevation of (15^\circ), the simulated collected aperture power is approximately:
+At the design elevation of 15º, the simulated collected aperture power is approximately:
 
 [
 P_{\mathrm{OGS}} \approx -23.65,\mathrm{dBm}
 ]
 
-which is close to the selected ESTOL-like received-power requirement of (-23.7,\mathrm{dBm}).
+which is close to the selected ESTOL-like received-power requirement of -23.7 dBm.
 
 ---
 
@@ -148,15 +147,17 @@ The transmitted symbols are generated independently for the X and Y polarization
 
 ### RRC pulse shaping
 
-The baseband waveform is pulse-shaped using a root-raised-cosine filter with roll-off factor (\alpha=0.2), span of 16 symbols, and 4 samples per symbol.
+The baseband waveform is pulse-shaped using a root-raised-cosine filter with roll-off factor ($\alpha=0.2$), span of 16 symbols, and 4 samples per symbol.
 
 ![RRC frequency response](docs/figures/B03_RRC-Frequency-Response.png)
 
 The resulting transmitted spectrum occupies the expected bandwidth around
 
-[
-\frac{(1+\alpha)R_s}{2}=18.9,\mathrm{GHz}
-]
+$$
+\begin{align}
+  \frac{(1+\alpha)R_s}{2}=18.9,\mathrm{GHz}
+\end{align}
+$$
 
 on each side of complex baseband.
 
@@ -216,9 +217,11 @@ The BER simulation compares the ideal AWGN reference with increasingly complete 
 
 The full-channel BER curve crosses the selected oFEC pre-FEC threshold,
 
-[
-\mathrm{BER}_{\mathrm{pre-FEC}} = 2.0\times10^{-2},
-]
+$$
+\begin{align}
+  \mathrm{BER}_{\mathrm{pre-FEC}} = 2.0\times10^{-2},
+\end{align}
+$$
 
 at approximately
 
