@@ -42,15 +42,15 @@ Main assumptions:
 | Link type              |             LEO-to-ground optical downlink |
 | Modulation             |                                    DP-QPSK |
 | Symbol rate            |     31.5 $\mathrm{Gbaud}$ per polarization |
-| Raw bit rate           |  126$\mathrm{Gbit/s}$ before FEC/overheads |
-| Wavelength             |                                 1554.13 nm |
-| Satellite altitude     |                                     530 km |
+| Raw bit rate           | 126 $\mathrm{Gbit/s}$ before FEC/overheads |
+| Wavelength             |                      1554.13 $\mathrm{nm}$ |
+| Satellite altitude     |                          530 $\mathrm{km}$ |
 | Design elevation       |                                        15º |
-| Transmit optical power |                                        6 W |
-| Transmit divergence    |                          380 $\mu$rad FWHM |
-| Receiver aperture      |                                      0.8 m |
-| Pulse shaping          |        RRC, ($\alpha=0.2$), 4 samples/symbol |
-| BER target             |       2.0$\times10^{-2}$ pre-FEC threshold |
+| Transmit optical power |                             6 $\mathrm{W}$ |
+| Transmit divergence    |              380 $\mu$ $\mathrm{rad}$ FWHM |
+| Receiver aperture      |                           0.8 $\mathrm{m}$ |
+| Pulse shaping          |      RRC, ($\alpha=0.2$), 4 samples/symbol |
+| BER target             |      2.0 $\times10^{-2}$ pre-FEC threshold |
 
 ---
 
@@ -129,9 +129,11 @@ The link-budget simulation computes received irradiance at the Optical Ground St
 
 At the design elevation of 15º, the simulated collected aperture power is approximately:
 
-[
-P_{\mathrm{OGS}} \approx -23.65,\mathrm{dBm}
-]
+$$
+begin{align}
+  P_{\mathrm{OGS}} \approx -23.65,\mathrm{dBm}
+end{align}
+$$
 
 which is close to the selected ESTOL-like received-power requirement of -23.7 dBm.
 
@@ -225,9 +227,11 @@ $$
 
 at approximately
 
-[
+$$
+\begin{align}
 E_b/N_0 \approx 5.5,\mathrm{dB}.
-]
+\end{align}
+$$
 
 ---
 
