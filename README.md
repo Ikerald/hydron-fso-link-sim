@@ -17,7 +17,7 @@ The simulator combines:
 * log-normal scintillation,
 * aperture averaging,
 * pointing jitter,
-* BER estimation versus (E_b/N_0).
+* BER estimation versus $E_b/N_0$.
 
 Although the carrier is optical, the simulation follows the same system-engineering workflow used in RF wireless studies: link budget, propagation/channel modelling, impairment modelling, receiver sensitivity analysis, Monte Carlo evaluation, and BER/threshold comparison.
 
@@ -90,7 +90,7 @@ Runs the DP-QPSK physical/link-layer BER simulation. It includes:
 * AWGN,
 * matched filtering,
 * symbol decisions and BER estimation,
-* BER curves versus (E_b/N_0).
+* BER curves versus $E_b/N_0$.
 
 ---
 
@@ -131,11 +131,105 @@ At the design elevation of 15º, the simulated collected aperture power is appro
 
 $$
 \begin{align}
-  P_{\mathrm{OGS}} \approx -23.65,\mathrm{dBm}
+  P_{\mathrm{OGS}} \approx -23.65 \ \mathrm{dBm}
 \end{align}
 $$
 
-which is close to the selected ESTOL-like received-power requirement of -23.7 dBm.
+which is close to the selected ESTOL-like received-power requirement of -23.7 $\mathrm{dBm}$. The results of the link budget were as follows:
+
+\begin{table}[h!] \centering \caption{Link budget for a \acrshort{hydron}-like satellite.} \label{tab:link_budget1} \renewcommand{\arraystretch}{1.18} \setlength{\extrarowheight}{1pt} \setlength{\tabcolsep}{7pt} \begin{tabular}{@{}>{\raggedright\arraybackslash}p{5.2cm}cc@{}} \toprule
+
+& \multicolumn{2}{c}{\textbf{\acrshort{hydron}-like \acrshort{leo}-to-ground link}} \\
+\cmidrule(l){2-3}
+
+& \multicolumn{2}{c}{\small\textit{530 km sun-synchronous orbit, 380 $\mu\mathrm{rad}$ FWHM Tx divergence}} \\
+& \multicolumn{2}{c}{\small\textit{6 W Tx power at $\lambda = 1554.13$ nm}} \\
+& \multicolumn{2}{c}{\small\textit{into the 80 cm $\diameter$ telescope aperture}} \\
+& \multicolumn{2}{c}{\small\textit{of the \acrshort{dlr} site at Oberpfaffenhofen}} \\
+
+\addlinespace[0.5em]
+
+\textbf{Parameter (formula)}
+& \textbf{15$^\circ$ elevation}
+& \textbf{Zenith} \\
+\midrule
+
+Mean source power $p_{\mathrm{Tx}}$
+& +37.78 dBm
+& +37.78 dBm \\
+
+Tx internal losses $a_{\mathrm{Tx}}$
+& -0.30 dB
+& -0.30 dB \\
+
+Tx antenna gain $g_{\mathrm{Tx}}$ (\ref{eq:gain_tx})
+& +78.85 dB
+& +78.85 dB \\
+
+\addlinespace[0.25em]
+\midrule
+
+Pointing loss $a_{\mathrm{BW}}$ (\ref{eq:a_bw})
+& -0.20 dB
+& -0.20 dB \\
+
+Distance $L$ (\ref{eq:link_distance})
+& 1472.8 km
+& 529.4 km \\
+
+Free-space loss $a_{\mathrm{FSL}}$ (\ref{eq:a_fsl})
+& -261.52 dB
+& -252.63 dB \\
+
+\addlinespace[0.25em]
+\midrule
+
+Atmospheric attenuation $a_{\mathrm{Atm}}$ (\ref{eq:a_atm})
+& -1.94 dB
+& -0.50 dB \\
+
+Scintillation loss $a_{\mathrm{Sci}}$
+& n/a
+& n/a \\
+
+Rx antenna gain $g_{\mathrm{Rx}}$ (\ref{eq:gain_rx})
+& +123.66 dB
+& +123.66 dB \\
+
+\addlinespace[0.25em]
+\midrule
+
+Power into \acrshort{ogs} aperture without Rx losses $p_{\mathrm{Rx,no\,loss}}$ (\ref{eq:pr_no_loss})
+& \textbf{-23.65 dBm}
+& \textbf{-13.33 dBm} \\
+
+Irradiance at \acrshort{ogs} aperture without Rx losses (\ref{eq:irradiance})
+& 9.647 $\mu\mathrm{W}/\mathrm{m}^{2}$
+& 103.903 $\mu\mathrm{W}/\mathrm{m}^{2}$ \\
+
+Rx internal losses and signal splitting for tracking $a_{\mathrm{Rx}}$
+& -4.10 dB
+& -4.10 dB \\
+
+Power after Rx internal losses $p_{\mathrm{Rx}}$ (\ref{eq:link_budget})
+& -27.75 dBm
+& -17.43 dBm \\
+
+Irradiance after Rx internal losses (\ref{eq:irradiance})
+& 3.753 $\mu\mathrm{W}/\mathrm{m}^{2}$
+& 40.423 $\mu\mathrm{W}/\mathrm{m}^{2}$ \\
+
+RFE sensitivity $p_{\mathrm{RFE}}$ (\ref{eq:rfe_rx})
+& -40.94 dBm
+& -40.94 dBm \\
+
+Photons-per-bit margin (\ref{eq:link_mar})
+& +13.19 dB
+& +23.51 dB \\
+
+\hline \hline
+\end{tabular}
+\end{table}
 
 ---
 
@@ -157,7 +251,7 @@ The resulting transmitted spectrum occupies the expected bandwidth around
 
 $$
 \begin{align}
-  \frac{(1+\alpha)R_s}{2}=18.9,\mathrm{GHz}
+  \frac{(1+\alpha)R_s}{2}=18.9 \ \mathrm{GHz}
 \end{align}
 $$
 
@@ -169,7 +263,7 @@ on each side of complex baseband.
 
 ### Atmospheric turbulence profiles
 
-The simulator compares Hufnagel-Valley and modified Hufnagel-Valley refractive-index structure parameter profiles (C_n^2(h)).
+The simulator compares Hufnagel-Valley and modified Hufnagel-Valley refractive-index structure parameter profiles ($C_n^2(h)$).
 
 ![HV and MHV turbulence profiles](docs/figures/B06_HV-vs-MHV.png)
 
@@ -211,7 +305,7 @@ The included cases are:
 
 ---
 
-### BER versus (E_b/N_0)
+### BER versus $E_b/N_0$
 
 The BER simulation compares the ideal AWGN reference with increasingly complete optical-channel models.
 
@@ -229,7 +323,7 @@ at approximately
 
 $$
 \begin{align}
-  E_b/N_0 \approx 5.5,\mathrm{dB}.
+  E_b/N_0 \approx 5.5\ \mathrm{dB}.
 \end{align}
 $$
 
