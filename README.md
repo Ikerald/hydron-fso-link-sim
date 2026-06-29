@@ -130,9 +130,9 @@ The link-budget simulation computes received irradiance at the Optical Ground St
 At the design elevation of 15º, the simulated collected aperture power is approximately:
 
 $$
-begin{align}
+\begin{align}
   P_{\mathrm{OGS}} \approx -23.65,\mathrm{dBm}
-end{align}
+\end{align}
 $$
 
 which is close to the selected ESTOL-like received-power requirement of -23.7 dBm.
@@ -229,7 +229,7 @@ at approximately
 
 $$
 \begin{align}
-E_b/N_0 \approx 5.5,\mathrm{dB}.
+  E_b/N_0 \approx 5.5,\mathrm{dB}.
 \end{align}
 $$
 
