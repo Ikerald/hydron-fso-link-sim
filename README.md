@@ -213,7 +213,7 @@ This captures the reduction in power fluctuations when the received optical fiel
 
 The received complex-baseband spectrum is evaluated after the optical channel impairments and receiver matched filter.
 
-![Received spectrum after matched filter](docs/figures/B08_Rx-Spectrum-after-Matched Filter-AWGN-atmosphere-turbulence-pointing.png)
+![Received spectrum after matched filter](docs/figures/B08_Rx-Spectrum.png)
 
 ---
 
@@ -336,8 +336,8 @@ Some parameters are configured for reasonable execution time. Larger Monte Carlo
 
 ## Author
 
-**Iker Aldasoro Marculeta** 
-MSc Telecommunications Engineering
+**Iker Aldasoro Marculeta**<br>
+MSc Telecommunications Engineering<br>
 Universidad Carlos III de Madrid
 
 ---
