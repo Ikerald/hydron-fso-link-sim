@@ -36,6 +36,7 @@ The goal is not to provide a production-ready optical communication simulator, b
 The simulated scenario is a HydRON-like LEO-to-ground optical feeder link using coherent DP-QPSK transmission around the 1550 nm optical window using the ESTOL specifications.
 
 Main assumptions:
+$y+x=3$
 
 | Parameter              |                                      Value |
 | ---------------------- | -----------------------------------------: |
